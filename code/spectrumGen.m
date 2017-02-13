@@ -6,22 +6,30 @@ function [freq,X]=spectrumGen(signal,fs,side)
 %   X    --- magnitud de la transformada de Fourier
 %   freq --- eje de frecuencia en Hz 
 %--------------------------------------------------
-	L=length(Signal);       % Longitud de la señal
-	if side == 1
-		ts=1/fs;            % Tiempo de muestreo
-		tm=L*ts;            % Duración de la señal
-		if mod(L,2)==0
-		   k=-L/2:L/2-1;            % Numero de muestras even
-		else
-		   k=-(L-1)/2:(L-1)/2;      % Numero de muestras odd
-		end
-		freq=k/tm;                  % Vector de frec. discreta
-		xs=fftshift(signal);        % Corregir error de fase
-		X=fft(xs)/L;                % Normalización de los datos
-		X=abs(fftshift(X));         % Centralización de los datos
-	else
-		X = abs(fftshift(fft(signal)))/L;
-		df = fs/L;
-		freq = -fs/2+df:df:fs/2;
-	end
+	Np=8192;							% Número de puntos de la DFT
+	L=length(signal);					% Longitud de la señal
+	ts=(1/fs);							% Tiempo de muestreo
+	Mp=ceil(Np/2);						% Mitad de puntos de la FFT
+	wd=0:2*pi/Np:2*pi*(Np-1)/Np;		% Vector de Frec. discreta
+	wdo=zeros(1,Np);					% Vector de Frec. disc. organizadas
+	wc=zeros(1,Np);						% Vector de Frec. cont. en rad/seg
+	fc=zeros(1,Np);						% Vector de Frec. cont. en Hz
+	z=abs(fft(x,Np));					% Magnitud de FFT de la señal
+	zo=zeros(1,Np);						% Vector para reorganizar la FFT
+	t=0:ts:ts*(L-1);					% Vector de tiempo
+
+	% Reorganización de frecuencias
+	wdo(Np-Mp+1:end)=wd(1:Mp);
+	wdo(1:Np-Mp)=wd(Mp+1:end)-2*pi;
+
+	% Frecuencia continua en Hz
+	wc=wdo/ts;
+	fc=wc/(2*pi);
+
+	% Reorganización de la FFT
+	zo(Np-Mp+1:end)=z(1:Mp);
+	zo(1:Np-Mp)=z(Mp+1:end);
+
+	X=zo;
+	freq=fc;
 end
